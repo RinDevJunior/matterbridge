@@ -66,10 +66,12 @@ const clustersColumns: MbfTableColumn<Cluster>[] = [
     label: 'Endpoint',
     id: 'endpoint',
     required: true,
+    filterable: true,
   },
   {
     label: 'Id',
     id: 'id',
+    filterable: true,
   },
   {
     label: 'Device Types',
@@ -80,6 +82,7 @@ const clustersColumns: MbfTableColumn<Cluster>[] = [
     label: 'Cluster Name',
     id: 'clusterName',
     required: true,
+    filterable: true,
   },
   {
     label: 'Cluster ID',
@@ -89,6 +92,7 @@ const clustersColumns: MbfTableColumn<Cluster>[] = [
     label: 'Attribute Name',
     id: 'attributeName',
     required: true,
+    filterable: true,
   },
   {
     label: 'Attribute ID',
@@ -270,9 +274,9 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
     return <Connecting />;
   }
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', margin: '0px', padding: '0px', gap: '20px', width: '100%', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', margin: '0px', padding: '0px', gap: '20px', width: '100%', height: '100%', minHeight: 0, overflow: 'hidden' }}>
       {/* Devices Table */}
-      <MbfWindow style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', maxHeight: pluginName && endpoint ? '30%' : '100%', flex: '1 1 auto', overflow: 'hidden' }}>
+      <MbfWindow style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', flex: pluginName && endpoint ? '0 0 auto' : '1 1 0', maxHeight: pluginName && endpoint ? '30%' : undefined, minHeight: 0, overflow: 'hidden' }}>
         <MbfTable
           name="Registered devices"
           getRowKey={getDeviceRowKey}
@@ -285,7 +289,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
 
       {/* Clusters Table */}
       {pluginName && endpoint && (
-        <MbfWindow style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', height: '70%', maxHeight: '70%', flex: '1 1 auto', overflow: 'hidden' }}>
+        <MbfWindow style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', flex: '1 1 0', minHeight: 0, overflow: 'hidden' }}>
           <MbfTable
             name="Clusters"
             title={deviceName || ''}

@@ -53,6 +53,7 @@ export interface MbfTableColumn<T extends object> {
   required?: boolean;
   tooltip?: boolean;
   comparator?: (a: T, b: T) => number;
+  filterable?: boolean;
 }
 
 interface ColumnVisibility {
@@ -208,6 +209,23 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
     setConfigureVisibilityDialogOpen(false);
   };
 
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+
+  const hasFilterRow = columns.some((c) => c.filterable && !c.hidden);
+
+  const filteredRows = useMemo<T[]>(() => {
+    const activeFilters = Object.entries(columnFilters).filter(([, v]) => v !== '');
+    if (activeFilters.length === 0) return sortedRows;
+    return sortedRows.filter((row) =>
+      activeFilters.every(([colId, filterText]) => {
+        // oxlint-disable-next-line typescript/no-explicit-any
+        const value = (row as any)[colId];
+        if (value === undefined || value === null) return false;
+        return String(value).toLowerCase().includes(filterText.toLowerCase());
+      }),
+    );
+  }, [sortedRows, columnFilters]);
+
   const [closed, setClosed] = useState(false);
 
   if (closed) return null;
@@ -305,7 +323,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
       </MbfWindowHeader>
 
       <MbfWindowContent
-        style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', minHeight: 0, width: '100%', overflow: 'auto', margin: '0px', padding: '0px', gap: '0' }}
+        style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', minHeight: 0, width: '100%', overflowX: 'hidden', overflowY: 'auto', margin: '0px', padding: '0px', gap: '0' }}
       >
         <table aria-label={`${name} table`} style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 10, border: 'none', color: 'var(--header-text-color)', backgroundColor: 'var(--header-bg-color' }}>
@@ -348,9 +366,41 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
                 );
               })}
             </tr>
+            {hasFilterRow && (
+              <tr style={{ height: '30px', minHeight: '30px' }}>
+                {columns.map((column) => {
+                  if (column.hidden) return null;
+                  if (!column.required && visibleMap[column.id] === false) return null;
+                  if (!column.filterable) return <th key={column.id} style={{ padding: '2px 10px', backgroundColor: 'var(--header-bg-color)' }} />;
+                  return (
+                    <th key={column.id} style={{ padding: '2px 10px', backgroundColor: 'var(--header-bg-color)', overflow: 'hidden', maxWidth: column.maxWidth }}>
+                      <input
+                        type="text"
+                        value={columnFilters[column.id] ?? ''}
+                        onChange={(e) => setColumnFilters((prev) => ({ ...prev, [column.id]: e.target.value }))}
+                        onClick={(e) => e.stopPropagation()}
+                        placeholder="Filter..."
+                        style={{
+                          width: '100%',
+                          minWidth: 0,
+                          boxSizing: 'border-box',
+                          fontSize: '12px',
+                          padding: '2px 6px',
+                          border: '1px solid var(--header-text-color)',
+                          borderRadius: '3px',
+                          backgroundColor: 'var(--main-bg-color)',
+                          color: 'var(--main-text-color)',
+                          outline: 'none',
+                        }}
+                      />
+                    </th>
+                  );
+                })}
+              </tr>
+            )}
           </thead>
           <tbody>
-            {sortedRows.map((row, index) => {
+            {filteredRows.map((row, index) => {
               const rowKey = getStableRowKey(row);
               return (
                 <tr
